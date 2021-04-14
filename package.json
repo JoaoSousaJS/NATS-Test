@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "publish": "ts-node-dev --rs --notify false src/publisher.ts",
+    "nats-publish": "ts-node-dev --rs --notify false src/publisher.ts",
     "listen": "ts-node-dev --rs --notify false src/listener.ts"
   },
   "dependencies": {
