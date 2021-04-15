@@ -10,7 +10,10 @@ const stan = nats.connect('ticketing', randomBytes(4).toString('hex'), {
 stan.on('connect', () => {
   console.log('listener connected to NATS')
 
-  const subscription = stan.subscribe('ticket:created', 'ordersServiceQueueGroup')
+  const options = stan.subscriptionOptions()
+  .setManualAckMode(true)
+
+  const subscription = stan.subscribe('ticket:created', 'ordersServiceQueueGroup', options)
 
   subscription.on('message', (msg: Message) => {
     console.log(msg.getData())
