@@ -18,6 +18,13 @@ stan.on('connect', () => {
   subscription.on('message', (msg: Message) => {
     console.log(msg.getData())
 
-    console.log('Message Received')
+    const data = msg.getData()
+
+    if (typeof data === 'string') {
+      console.log(`Received event #${msg.getSequence()}, with data: ${data}`)
+    }
+
+    msg.ack()
+
   })
 })
