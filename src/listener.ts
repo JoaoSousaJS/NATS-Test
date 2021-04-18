@@ -1,79 +1,76 @@
-import nats, { Message, Stan } from 'node-nats-streaming'
-import { randomBytes} from 'crypto'
+import nats, { Message, Stan } from 'node-nats-streaming';
+import { randomBytes } from 'crypto';
 
-console.clear()
+console.clear();
 
 const stan = nats.connect('ticketing', randomBytes(4).toString('hex'), {
-  url: 'http://localhost:4222'
-})
+  url: 'http://localhost:4222',
+});
 
 stan.on('connect', () => {
-  console.log('listener connected to NATS')
+  console.log('Listener connected to NATS');
 
   stan.on('close', () => {
-    console.log('NATS connection closed!')
-    process.exit()
-  })
+    console.log('NATS connection closed!');
+    process.exit();
+  });
 
-  new TicketCreatedListener(stan).listen()
+  new TicketCreatedListener(stan).listen();
+});
 
- 
-})
-
-process.on('SIGINT', () => stan.close())
-process.on('SIGTERM', () => stan.close())
+process.on('SIGINT', () => stan.close());
+process.on('SIGTERM', () => stan.close());
 
 abstract class Listener {
-  abstract subject: string
-  abstract queueGroupName: string
-  abstract onMessage(data: any, msg: Message):void
-  private client: Stan
-  protected ackWait = 5 * 100
+  abstract subject: string;
+  abstract queueGroupName: string;
+  abstract onMessage(data: any, msg: Message): void;
+  private client: Stan;
+  protected ackWait = 5 * 1000;
 
   constructor(client: Stan) {
-    this.client = client
+    this.client = client;
   }
 
   subscriptionOptions() {
-    return this.client.subscriptionOptions()
-    .setDeliverAllAvailable()
-    .setManualAckMode(true)
-    .setAckWait(this.ackWait)
-    .setDurableName(this.queueGroupName)
+    return this.client
+      .subscriptionOptions()
+      .setDeliverAllAvailable()
+      .setManualAckMode(true)
+      .setAckWait(this.ackWait)
+      .setDurableName(this.queueGroupName);
   }
 
   listen() {
-    const subscritption = this.client.subscribe(
+    const subscription = this.client.subscribe(
       this.subject,
       this.queueGroupName,
       this.subscriptionOptions()
-    )
+    );
 
-    subscritption.on('message', (msg: Message) => {
-      console.log(
-        `Message received: ${this.subject} / ${this.queueGroupName}`
-      )
+    subscription.on('message', (msg: Message) => {
+      console.log(`Message received: ${this.subject} / ${this.queueGroupName}`);
 
-      const parseData = this.parseMessage(msg)
-
-      this.onMessage(parseData, msg)
-    })
+      const parsedData = this.parseMessage(msg);
+      this.onMessage(parsedData, msg);
+    });
   }
 
   parseMessage(msg: Message) {
-    const data = msg.getData()
+    const data = msg.getData();
     return typeof data === 'string'
-      ? JSON.parse(data) : JSON.parse(data.toString('utf8'))
+      ? JSON.parse(data)
+      : JSON.parse(data.toString('utf8'));
   }
 }
 
 class TicketCreatedListener extends Listener {
-  subject = 'ticket:created'
-  queueGroupName = 'payments-service'
-  
-  onMessage(data: any, msg: Message) {
-    console.log('Event data!', data)
+  subject = 'ticket:created';
+  queueGroupName = 'payments-service';
 
-    msg.ack()
+  onMessage(data: any, msg: Message) {
+    console.log('Event data!', data);
+
+    msg.ack();
   }
 }
