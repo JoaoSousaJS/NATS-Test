@@ -16,9 +16,9 @@ stan.on('connect', () => {
   })
 
   const options = stan.subscriptionOptions()
-  .setManualAckMode(true)
+  .setManualAckMode(true).setDeliverAllAvailable().setDurableName('ordersServiceQueueGroup')
 
-  const subscription = stan.subscribe('ticket:created', 'ordersServiceQueueGroup', options)
+  const subscription = stan.subscribe('ticket:created','queue-group-name', options)
 
   subscription.on('message', (msg: Message) => {
     console.log(msg.getData())
